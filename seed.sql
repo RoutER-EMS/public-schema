@@ -2,6 +2,8 @@
 -- Run AFTER init.sql.
 -- UUIDs must be valid hex (0-9, a-f) per PostgreSQL uuid type.
 
+BEGIN;
+
 -- ============================================================
 -- Contracts
 -- ============================================================
@@ -19,14 +21,31 @@ VALUES (
     {"key":"A9EF3KJLS2D4JFL324KA23DF","user_type":"manager","email":"manager@testagency.com","is_used":false,"created_at":"2026-03-23T12:00:00Z"}
   ]'::jsonb,
   NULL
-);
+)
+ON CONFLICT (contract_id) DO UPDATE
+SET
+  agency_name = EXCLUDED.agency_name,
+  price_per_ambulance = EXCLUDED.price_per_ambulance,
+  start_date = EXCLUDED.start_date,
+  end_date = EXCLUDED.end_date,
+  max_users = EXCLUDED.max_users,
+  current_num_users = EXCLUDED.current_num_users,
+  generated_keys = EXCLUDED.generated_keys,
+  main_contact_user_id = EXCLUDED.main_contact_user_id;
 
 -- ============================================================
 -- Users
 -- ============================================================
 
 INSERT INTO users (user_id, name, email, user_type, generated_key, contract_id) VALUES
-  ('a0000000-0000-0000-0000-000000000001', 'Admin User', 'router.ems.gt@gmail.com', 'admin', NULL, NULL);
+  ('648824a8-a071-700d-a49f-f1f2d4f87981', 'Admin User', 'router.ems.gt@gmail.com', 'admin', NULL, NULL)
+ON CONFLICT (user_id) DO UPDATE
+SET
+  name = EXCLUDED.name,
+  email = EXCLUDED.email,
+  user_type = EXCLUDED.user_type,
+  generated_key = EXCLUDED.generated_key,
+  contract_id = EXCLUDED.contract_id;
 
 -- ============================================================
 -- Hospitals (Atlanta metro area)
@@ -66,7 +85,15 @@ INSERT INTO hospitals (
   ('b0000000-0000-0000-0000-000000000021', 'Wellstar Cobb Hospital',                             ST_MakePoint(-84.605025, 33.857542)::geography, 200, 50, '470-732-3051/3043', '3950 AUSTELL ROAD, AUSTELL, GA 30106'),
   ('b0000000-0000-0000-0000-000000000022', 'Wellstar Douglas Hospital',                          ST_MakePoint(-84.731524, 33.739118)::geography, 200, 38, '470-644-6422', '8954 HOSPITAL DRIVE, DOUGLASVILLE, GA 30134'),
   ('b0000000-0000-0000-0000-000000000023', 'WellStar Kennestone Regional Medical Center',        ST_MakePoint(-84.551352, 33.967953)::geography, 200, 31, '770-793-5698', '677 CHURCH STREET, MARIETTA, GA 30060'),
-  ('b0000000-0000-0000-0000-000000000024', 'Wellstar North Fulton Hospital',                     ST_MakePoint(-84.319972, 34.063321)::geography, 200, 48, '770-410-4419', '3000 HOSPITAL BOULEVARD, ROSWELL, GA 30076');
+  ('b0000000-0000-0000-0000-000000000024', 'Wellstar North Fulton Hospital',                     ST_MakePoint(-84.319972, 34.063321)::geography, 200, 48, '770-410-4419', '3000 HOSPITAL BOULEVARD, ROSWELL, GA 30076')
+ON CONFLICT (hospital_id) DO UPDATE
+SET
+  hospital_name = EXCLUDED.hospital_name,
+  location = EXCLUDED.location,
+  geofence_radius_meters = EXCLUDED.geofence_radius_meters,
+  er_wall_time_minutes = EXCLUDED.er_wall_time_minutes,
+  phone_number = EXCLUDED.phone_number,
+  address = EXCLUDED.address;
 
 -- ============================================================
 -- Hospital specialties (sample)
@@ -161,4 +188,10 @@ INSERT INTO hospital_specialties (hospital_id, specialty_key, specialty_level, d
   ('b0000000-0000-0000-0000-000000000024', 'stemi', 'C-II', 'open'),
   ('b0000000-0000-0000-0000-000000000024', 'trauma', 'T-II', 'open'),
   ('b0000000-0000-0000-0000-000000000024', 'stroke', 'CSC', 'open'),
-  ('b0000000-0000-0000-0000-000000000024', 'obgyn', 'M-II', 'open');
+  ('b0000000-0000-0000-0000-000000000024', 'obgyn', 'M-II', 'open')
+ON CONFLICT (hospital_id, specialty_key) DO UPDATE
+SET
+  specialty_level = EXCLUDED.specialty_level,
+  diversion_status = EXCLUDED.diversion_status;
+
+COMMIT;
