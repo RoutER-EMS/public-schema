@@ -18,7 +18,7 @@ VALUES (
   12,
   0,
   '[
-    {"key":"A9EF3KJLS2D4JFL324KA23DF","user_type":"manager","email":"manager@testagency.com","is_used":false,"created_at":"2026-03-23T12:00:00Z"}
+    {"key":"A9EF3KJLS2D4JFL324KA23DF","user_type":"manager","email":"vhesu3@gatech.edu","is_used":false,"created_at":"2026-03-23T12:00:00Z"}
   ]'::jsonb,
   NULL
 )
