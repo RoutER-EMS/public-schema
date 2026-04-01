@@ -36,6 +36,10 @@ CREATE TYPE hospital_specialty_type AS ENUM (
 -- TABLES
 -- ============================================================
 
+-- contracts.generated_keys JSONB schema per entry:
+--   { "key": "XXXX-YYYY", "user_type": "manager"|"driver", "email": "invitee@example.com",
+--     "is_used": false, "created_at": "ISO-8601" }
+
 CREATE TABLE contracts (
   contract_id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   agency_name          VARCHAR(255),
@@ -132,7 +136,7 @@ CREATE TABLE routes (
 );
 
 CREATE TABLE route_suggestions (
-  suggestion_id              BIGSERIAL PRIMARY KEY,
+  suggestion_id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   route_id                   UUID REFERENCES routes(route_id) ON DELETE CASCADE,
   hospital_id                UUID REFERENCES hospitals(hospital_id),
   suggestion_rank            INTEGER,
@@ -143,7 +147,7 @@ CREATE TABLE route_suggestions (
 );
 
 CREATE TABLE ambulance_telemetry (
-  telemetry_id BIGSERIAL PRIMARY KEY,
+  telemetry_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   ambulance_id UUID REFERENCES ambulances(ambulance_id),
   location     GEOGRAPHY(Point, 4326),
   recorded_at  TIMESTAMP DEFAULT now()
@@ -164,6 +168,7 @@ CREATE INDEX idx_hospital_spec_hosp  ON hospital_specialties (hospital_id);
 CREATE INDEX idx_load_hospital       ON hospital_load_balance (hospital_id);
 
 CREATE INDEX idx_shifts_user         ON shifts (user_id);
+CREATE INDEX idx_shifts_active       ON shifts (user_id) WHERE end_time IS NULL;
 
 CREATE INDEX idx_routes_shift        ON routes (shift_id);
 
