@@ -30,7 +30,7 @@ CREATE TYPE hospital_specialty_type AS ENUM (
 --   pediatric → P-I, P-II, P-III
 --   obgyn     → M-I, M-II, M-III, M-IV
 --   neonatal  → Neo-I, Neo-II, Neo-III, Neo-IV
---   burn      → (no designated levels; column is NULL)
+--   burn      → (optional freeform label; may be NULL)
 
 -- ============================================================
 -- TABLES
@@ -73,6 +73,7 @@ CREATE TABLE hospitals (
   hospital_id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   hospital_name        VARCHAR(255) NOT NULL,
   location             GEOGRAPHY(Point, 4326),
+  geofence_radius_meters INTEGER DEFAULT 200,
   er_wall_time_minutes INTEGER DEFAULT 0,
   phone_number         VARCHAR(30),
   address              TEXT,
