@@ -39,10 +39,9 @@ SET
 
 INSERT INTO users (user_id, name, email, user_type, generated_key, contract_id) VALUES
   ('648824a8-a071-700d-a49f-f1f2d4f87981', 'Admin User', 'router.ems.gt@gmail.com', 'admin', NULL, NULL)
-ON CONFLICT (user_id) DO UPDATE
+ON CONFLICT (email) DO UPDATE
 SET
   name = EXCLUDED.name,
-  email = EXCLUDED.email,
   user_type = EXCLUDED.user_type,
   generated_key = EXCLUDED.generated_key,
   contract_id = EXCLUDED.contract_id;
