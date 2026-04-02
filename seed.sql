@@ -5,35 +5,6 @@
 BEGIN;
 
 -- ============================================================
--- Contracts
--- ============================================================
-
-INSERT INTO contracts (contract_id, agency_name, price_per_ambulance, start_date, end_date, max_users, current_num_users, generated_keys, main_contact_user_id)
-VALUES (
-  'c0000000-0000-0000-0000-000000000001',
-  'Test Agency',
-  150,
-  '2025-01-01',
-  '2025-12-31',
-  12,
-  0,
-  '[
-    {"key":"A9EF3KJLS2D4JFL324KA23DF","user_type":"manager","email":"vhesu3@gatech.edu","is_used":false,"created_at":"2026-03-23T12:00:00Z"}
-  ]'::jsonb,
-  NULL
-)
-ON CONFLICT (contract_id) DO UPDATE
-SET
-  agency_name = EXCLUDED.agency_name,
-  price_per_ambulance = EXCLUDED.price_per_ambulance,
-  start_date = EXCLUDED.start_date,
-  end_date = EXCLUDED.end_date,
-  max_users = EXCLUDED.max_users,
-  current_num_users = EXCLUDED.current_num_users,
-  generated_keys = EXCLUDED.generated_keys,
-  main_contact_user_id = EXCLUDED.main_contact_user_id;
-
--- ============================================================
 -- Users
 -- ============================================================
 
