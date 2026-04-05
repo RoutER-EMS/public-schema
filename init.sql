@@ -12,8 +12,6 @@ CREATE TYPE user_type AS ENUM ('admin', 'manager', 'driver', 'hospital');
 
 CREATE TYPE diversion_status AS ENUM ('open', 'divert', 'closed');
 
-CREATE TYPE movement_status AS ENUM ('En route', 'At hospital', 'Patient dropped off');
-
 CREATE TYPE agency_vote AS ENUM ('agree', 'disagree', 'pending');
 
 -- burn is present in the mobile app's SPECIALTIES list but was absent from the
@@ -76,9 +74,7 @@ CREATE TABLE hospitals (
   geofence_radius_meters INTEGER DEFAULT 200,
   er_wall_time_minutes INTEGER DEFAULT 0,
   phone_number         VARCHAR(30),
-  address              TEXT,
-  en_route_num         INTEGER DEFAULT 0,
-  at_hospital_num      INTEGER DEFAULT 0
+  address              TEXT
 );
 
 ALTER TABLE users
@@ -97,13 +93,6 @@ CREATE TABLE hospital_specialties (
   PRIMARY KEY (hospital_id, specialty_key)
 );
 
-CREATE TABLE hospital_load_balance (
-  user_id         UUID PRIMARY KEY REFERENCES users(user_id),
-  hospital_id     UUID REFERENCES hospitals(hospital_id),
-  movement_status movement_status,
-  arrival_time    TIMESTAMP
-);
-
 CREATE TABLE ambulances (
   ambulance_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   contract_id      UUID REFERENCES contracts(contract_id),
@@ -115,30 +104,33 @@ CREATE TABLE ambulances (
 );
 
 CREATE TABLE shifts (
-  shift_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id    UUID REFERENCES users(user_id),
-  start_time TIMESTAMP,
-  end_time   TIMESTAMP
+  shift_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID REFERENCES users(user_id),
+  ambulance_id UUID REFERENCES ambulances(ambulance_id),
+  start_time   TIMESTAMP,
+  end_time     TIMESTAMP
 );
 
 CREATE TABLE routes (
-  route_id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  shift_id                UUID REFERENCES shifts(shift_id),
-  ambulance_id            UUID REFERENCES ambulances(ambulance_id),
-  hospital_specialty      hospital_specialty_type,
-  navigation_history      JSONB DEFAULT '[]'::jsonb,
-  start_location          GEOGRAPHY(Point, 4326),
-  arrival_hospital_id     UUID REFERENCES hospitals(hospital_id),
-  start_travel_time       TIMESTAMP,
-  end_travel_time         TIMESTAMP,
-  dropped_off_patient_time TIMESTAMP,
-  decision_time_seconds   INTEGER,
-  created_at              TIMESTAMP DEFAULT now()
+  route_id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  shift_id                   UUID REFERENCES shifts(shift_id),
+  ambulance_id               UUID REFERENCES ambulances(ambulance_id),
+  hospital_specialty         hospital_specialty_type,
+  navigation_history         JSONB DEFAULT '[]'::jsonb,
+  start_location             GEOGRAPHY(Point, 4326),
+  navigating_to_hospital_id  UUID REFERENCES hospitals(hospital_id),
+  arrival_hospital_id        UUID REFERENCES hospitals(hospital_id),
+  start_travel_time          TIMESTAMP,
+  end_travel_time            TIMESTAMP,
+  dropped_off_patient_time   TIMESTAMP,
+  decision_time_seconds      INTEGER,
+  created_at                 TIMESTAMP DEFAULT now()
 );
 
+-- route_id NULL after route row is deleted (ON DELETE SET NULL); suggestions are never deleted in app code.
 CREATE TABLE route_suggestions (
   suggestion_id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  route_id                   UUID REFERENCES routes(route_id) ON DELETE CASCADE,
+  route_id                   UUID REFERENCES routes(route_id) ON DELETE SET NULL,
   hospital_id                UUID REFERENCES hospitals(hospital_id),
   suggestion_rank            INTEGER,
   estimated_travel_minutes   INTEGER,
@@ -166,12 +158,12 @@ CREATE INDEX idx_hospitals_location  ON hospitals USING GIST (location);
 
 CREATE INDEX idx_hospital_spec_hosp  ON hospital_specialties (hospital_id);
 
-CREATE INDEX idx_load_hospital       ON hospital_load_balance (hospital_id);
-
 CREATE INDEX idx_shifts_user         ON shifts (user_id);
 CREATE INDEX idx_shifts_active       ON shifts (user_id) WHERE end_time IS NULL;
+CREATE INDEX idx_shifts_ambulance    ON shifts (ambulance_id);
 
-CREATE INDEX idx_routes_shift        ON routes (shift_id);
+CREATE INDEX idx_routes_shift                 ON routes (shift_id);
+CREATE INDEX idx_routes_navigating_hospital   ON routes (navigating_to_hospital_id);
 
 CREATE INDEX idx_suggestions_route   ON route_suggestions (route_id);
 
